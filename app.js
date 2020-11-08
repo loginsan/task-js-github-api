@@ -2,6 +2,7 @@ const searchField = document.querySelector('.search');
 const sForm = document.querySelector('.search-form');
 const hintsList = document.querySelector('.hints');
 const resultsList = document.querySelector('.results');
+let resultsArr = [];
 
 const requestData = (q) => {
   const requestURL = `https://api.github.com/search/repositories?q=${q.replaceAll(/[\s]+/g, '+')}&per_page=5`;
@@ -27,42 +28,41 @@ function debounce(fn, delay) {
 const debRequest = debounce(requestData, 300);
 
 const renderData = (items) => {
-  const struct = {hints: [], results: []};
+  const hints = [];
   items.forEach(item => {
     let [hint, result] = parseItem(item);
-    struct.hints.push(hint);
-    struct.results.push(result);
+    hints.push(hint);
+    resultsArr.push(result);
   });
   // prepare hints
-  renderHints(struct.hints);
-  // prepare results
-  renderResults(struct.results);
+  renderHints(hints);
 };
 
 const renderHints = (hints) => {
   clearList(hintsList);
-
+  let ord = 0;
   let fragment = new DocumentFragment();
-  for(let h of hints) {
+  for (let h of hints) {
     let li = document.createElement('li');
-    li.classList.add('hints__item')
+    li.classList.add('hints__item');
+    li.dataset.ord = ord++;
     li.append(h);
     fragment.append(li);
   }
   hintsList.append(fragment);
 };
 
-const renderResults = (results) => {
- clearList(resultsList);
-  
+const renderResult = (r) => {
   let fragment = new DocumentFragment();
-  for(let r of results) {
-    let li = document.createElement('li');
-    li.classList.add('results__item');
-    li.insertAdjacentHTML('afterbegin', `<ul><li><a href="${r.html_url}"><span>Name:</span> ${r.name}</a></li><li><span>Owner:</span> ${r.owner}</li><li><span>Stars:</span> ${r.stars}</li></ul>`);
-    li.insertAdjacentHTML('beforeend', `<button type="button" class="x" tabindex="1" />`);
-    fragment.append(li);
-  }
+  let li = document.createElement('li');
+  li.classList.add('results__item');
+  li.insertAdjacentHTML('afterbegin', 
+    `<ul><li><a href="${r.html_url}"><span>Name:</span> ${r.name}</a></li>
+    <li><span>Owner:</span> ${r.owner}</li><li><span>Stars:</span> ${r.stars}</li></ul>`
+  );
+  li.insertAdjacentHTML('beforeend', `<button type="button" class="x" tabindex="1" />`);
+  fragment.append(li);
+  
   resultsList.append(fragment);
 };
 
@@ -75,7 +75,6 @@ const parseItem = (item) => {
 searchField.addEventListener('input', function() {
   if (this.value === '') {
     clearList(hintsList);
-    clearList(resultsList);
   } else {
     debRequest(this.value);
   }
@@ -83,7 +82,6 @@ searchField.addEventListener('input', function() {
 
 searchField.addEventListener('change', function() {
   //console.log('change', this.value);
-  //debRequest(this.value);
 });
 
 searchField.addEventListener('keyup', function(evt) {
@@ -109,8 +107,11 @@ resultsList.addEventListener('click', function(evt) {
 hintsList.addEventListener('click', function(evt) {
   let hit = evt.target;
   if (hit.tagName === 'LI') {
-    searchField.value = hit.textContent;
-    debRequest(searchField.value);
+    searchField.value = '';
+    let ord = hit.dataset.ord;
+    renderResult(resultsArr[ord]);
+    clearList(hintsList);
+    resultsArr = [];
   }
 });
 
