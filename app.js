@@ -29,6 +29,7 @@ const debRequest = debounce(requestData, 300);
 
 const renderData = (items) => {
   const hints = [];
+  resultsArr = [];
   items.forEach(item => {
     let [hint, result] = parseItem(item);
     hints.push(hint);
@@ -62,8 +63,8 @@ const renderResult = (r) => {
   );
   li.insertAdjacentHTML('beforeend', `<button type="button" class="x" tabindex="1" />`);
   fragment.append(li);
-  
   resultsList.append(fragment);
+  resultsArr = [];
 };
 
 const parseItem = (item) => {
@@ -75,6 +76,7 @@ const parseItem = (item) => {
 searchField.addEventListener('input', function() {
   if (this.value === '') {
     clearList(hintsList);
+    resultsArr = [];
   } else {
     debRequest(this.value);
   }
@@ -111,7 +113,6 @@ hintsList.addEventListener('click', function(evt) {
     let ord = hit.dataset.ord;
     renderResult(resultsArr[ord]);
     clearList(hintsList);
-    resultsArr = [];
   }
 });
 
